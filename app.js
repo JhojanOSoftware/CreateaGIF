@@ -19,9 +19,13 @@ app.post('/upload', upload.single('video'), (req, res) => {
    const video = req.file.path;
    const gifPath = path.join('results', `${req.file.filename}.gif`);
    const command = ' python pypr/videoGift.py ' + video + ' ' + gifPath;
-  
-
-
-  });
+   exec(command, (error, stdout, stderr) => {
+     if (error) {
+       console.error(`Error: ${error.message}`);
+       return res.status(500).send('Error processing video');
+     }
+     res.download(gifPath, 'result.gif')
+   });
+});
 
 module.exports = app;
