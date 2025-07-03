@@ -40,6 +40,54 @@
       flex-direction: column;
       align-items: center;
     }
+    .switch-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1em;
+      gap: 1em;
+    }
+    .switch-label {
+      font-size: 1.1em;
+      color: #00e6d3;
+      cursor: pointer;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #444;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #00e6d3;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #007cf0;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+      background-color: #fff;
+    }
     label {
       font-size: 1.1em;
       margin-bottom: 0.5em;
@@ -121,13 +169,27 @@
 <body>
   <header>
     <h1>GIF Creator Web</h1>
-    <p>Convierte tu video en un GIF animado fácilmente.</p>
+    <p>Convierte tu video o imágenes en un GIF animado fácilmente.</p>
   </header>
   <div class="container">
+    <div class="switch-group">
+      <span class="switch-label" id="label-image">Imágenes</span>
+      <label class="switch">
+        <input type="checkbox" id="modeSwitch">
+        <span class="slider"></span>
+      </label>
+      <span class="switch-label" id="label-video">Video</span>
+    </div>
     <form id="uploadForm" enctype="multipart/form-data">
-      <label for="video">Selecciona un video:</label>
-      <input type="file" id="video" name="video" accept="video/*" required>
-      <button type="submit">Subir video y crear GIF</button>
+      <div id="image-inputs" style="display:block;">
+        <label for="images">Selecciona imágenes (png, jpg, jpeg):</label>
+        <input type="file" id="images" name="images" accept="image/png, image/jpeg, image/jpg" multiple>
+      </div>
+      <div id="video-inputs" style="display:none;">
+        <label for="video">Selecciona un video (mp4):</label>
+        <input type="file" id="video" name="video" accept="video/mp4">
+      </div>
+      <button type="submit">Subir y crear GIF</button>
       <div class="progress" id="progress">
         <div class="progress-bar" id="progressBar"></div>
       </div>
@@ -135,6 +197,33 @@
     <div class="result" id="result"></div>
   </div>
   <script>
+    // Switch logic
+    const modeSwitch = document.getElementById('modeSwitch');
+    const imageInputs = document.getElementById('image-inputs');
+    const videoInputs = document.getElementById('video-inputs');
+    const labelImage = document.getElementById('label-image');
+    const labelVideo = document.getElementById('label-video');
+
+    modeSwitch.addEventListener('change', function() {
+      if (modeSwitch.checked) {
+        // Video mode
+        imageInputs.style.display = 'none';
+        videoInputs.style.display = 'block';
+        labelImage.style.opacity = 0.5;
+        labelVideo.style.opacity = 1;
+      } else {
+        // Image mode
+        imageInputs.style.display = 'block';
+        videoInputs.style.display = 'none';
+        labelImage.style.opacity = 1;
+        labelVideo.style.opacity = 0.5;
+      }
+    });
+    // Set initial state
+    labelImage.style.opacity = 1;
+    labelVideo.style.opacity = 0.5;
+
+    // Upload logic
     const form = document.getElementById('uploadForm');
     const progress = document.getElementById('progress');
     const progressBar = document.getElementById('progressBar');
@@ -143,13 +232,27 @@
     form.addEventListener('submit', function(e) {
       e.preventDefault();
       result.innerHTML = '';
-      const fileInput = document.getElementById('video');
-      if (!fileInput.files.length) {
-        alert('Por favor selecciona un video.');
-        return;
+      let formData = new FormData();
+
+      if (!modeSwitch.checked) {
+        // Imagenes
+        const files = document.getElementById('images').files;
+        if (!files.length) {
+          alert('Por favor selecciona al menos una imagen.');
+          return;
+        }
+        for (let i = 0; i < files.length; i++) {
+          formData.append('images', files[i]);
+        }
+      } else {
+        // Video
+        const file = document.getElementById('video').files[0];
+        if (!file) {
+          alert('Por favor selecciona un video.');
+          return;
+        }
+        formData.append('video', file);
       }
-      const formData = new FormData();
-      formData.append('video', fileInput.files[0]);
 
       progress.style.display = 'block';
       progressBar.style.width = '0%';
@@ -167,7 +270,6 @@
       xhr.onload = function() {
         progress.style.display = 'none';
         if (xhr.status === 200) {
-          // Recibe el GIF como archivo descargable
           const blob = xhr.response;
           const url = window.URL.createObjectURL(blob);
           result.innerHTML = `
