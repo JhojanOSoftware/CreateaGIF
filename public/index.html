@@ -163,7 +163,13 @@
       .result img {
         max-width: 95vw;
       }
+        .download-link[disabled] {
+      pointer-events: none;
+      opacity: 0.5;
+      background: #888;
+      color: #fff;
     }
+    }   
   </style>
 </head>
 <body>
@@ -194,7 +200,10 @@
         <div class="progress-bar" id="progressBar"></div>
       </div>
     </form>
-    <div class="result" id="result"></div>
+    <div class="result" id="result">
+      <a id="downloadLink" class="download-link" href="#" style="display:none;" download="mi_gif.gif" disabled>Descargar GIF</a>
+      <div id="gifPreview"></div>
+    </div>
   </div>
   <script>
     // Switch logic
@@ -206,20 +215,17 @@
 
     modeSwitch.addEventListener('change', function() {
       if (modeSwitch.checked) {
-        // Video mode
         imageInputs.style.display = 'none';
         videoInputs.style.display = 'block';
         labelImage.style.opacity = 0.5;
         labelVideo.style.opacity = 1;
       } else {
-        // Image mode
         imageInputs.style.display = 'block';
         videoInputs.style.display = 'none';
         labelImage.style.opacity = 1;
         labelVideo.style.opacity = 0.5;
       }
     });
-    // Set initial state
     labelImage.style.opacity = 1;
     labelVideo.style.opacity = 0.5;
 
@@ -228,14 +234,19 @@
     const progress = document.getElementById('progress');
     const progressBar = document.getElementById('progressBar');
     const result = document.getElementById('result');
+    const downloadLink = document.getElementById('downloadLink');
+    const gifPreview = document.getElementById('gifPreview');
 
     form.addEventListener('submit', function(e) {
       e.preventDefault();
-      result.innerHTML = '';
+      result.querySelector('#gifPreview').innerHTML = '';
+      downloadLink.style.display = 'none';
+      downloadLink.setAttribute('disabled', 'disabled');
+      downloadLink.href = '#';
+
       let formData = new FormData();
 
       if (!modeSwitch.checked) {
-        // Imagenes
         const files = document.getElementById('images').files;
         if (!files.length) {
           alert('Por favor selecciona al menos una imagen.');
@@ -245,7 +256,6 @@
           formData.append('images', files[i]);
         }
       } else {
-        // Video
         const file = document.getElementById('video').files[0];
         if (!file) {
           alert('Por favor selecciona un video.');
@@ -272,20 +282,20 @@
         if (xhr.status === 200) {
           const blob = xhr.response;
           const url = window.URL.createObjectURL(blob);
-          result.innerHTML = `
-            <p>¡GIF creado exitosamente!</p>
-            <a class="download-link" href="${url}" download="mi_gif.gif">Descargar GIF</a>
-            <br>
-            <img src="${url}" alt="GIF generado">
-          `;
+
+          // Habilita el botón de descarga solo cuando el GIF está listo
+          downloadLink.href = url;
+          downloadLink.style.display = 'inline-block';
+          downloadLink.removeAttribute('disabled');
+          gifPreview.innerHTML = `<img src="${url}" alt="GIF generado">`;
         } else {
-          result.innerHTML = '<p style="color:#ff4d4d;">Ocurrió un error al crear el GIF.</p>';
+          gifPreview.innerHTML = '<p style="color:#ff4d4d;">Ocurrió un error al crear el GIF.</p>';
         }
       };
 
       xhr.onerror = function() {
         progress.style.display = 'none';
-        result.innerHTML = '<p style="color:#ff4d4d;">Error de conexión con el servidor.</p>';
+        gifPreview.innerHTML = '<p style="color:#ff4d4d;">Error de conexión con el servidor.</p>';
       };
 
       xhr.responseType = 'blob';
