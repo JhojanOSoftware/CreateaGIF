@@ -23,13 +23,11 @@ app.post('/upload', (req, res,next ) => {
   }
 },(req, res) => {
   
-  const video = req.files.find(f => f.fikename === 'video'));
+  const video = req.files.find(f => f.fikename === 'video');
   if (video){
     const videoF = video.path;
     const gifPath = path.join('results', `${videoF.filename}.gif`);
-    const command = `python pypr/srcgif.py "${videoF}" "${gifPath}"`;
-  }
-  
+    const command = `python pypr/srcgif.py "${videoF}" "${gifPath}"`;  
   exec(command, (error, stdout, stderr) => {
     if (error) {
       console.error(`Error: ${error.message}`);
@@ -39,16 +37,22 @@ app.post('/upload', (req, res,next ) => {
   });
   return;
 }
-   const video = req.file.path;
-   const gifPath = path.join('results', `${req.file.filename}.gif`);
-   const command = ' python pypr/srcgif.py ' + video + ' ' + gifPath;
-   exec(command, (error, stdout, stderr) => {
-     if (error) {
-       console.error(`Error: ${error.message}`);
-       return res.status(500).send('Error processing video');
-     }
-     res.download(gifPath, 'result.gif')
-   });
+ // Si son imágenes
+  const imageFiles = req.files.filter(f => f.fieldname === 'images');
+  if (imageFiles && imageFiles.length > 0) {
+    const images = imageFiles.map(f => f.path).join(',');
+    const gifPath = path.join('results', `${imageFiles[0].filename}.gif`);
+    const command = `python pypr/srcgif.py "${images}" "${gifPath}"`;
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error: ${error.message}`);
+        return res.status(500).send('Error processing images');
+      }
+      res.download(gifPath, 'result.gif');
+    });
+    return;
+  }
+  res.status(400).send('No files uploaded');
 });
 
 module.exports = app;
