@@ -1,24 +1,47 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const { exec } = require('child_process');
 const app = express();
 
 // Middleware para archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Configuración de multer para subir archivos
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({dest: 'uploads/'});
 
 // Ruta principal (sirve index.html automáticamente)
-app.get('/', (req, res) => {
+app.get('/index', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Ruta para subir video
-app.post('/upload', upload.single('video'), (req, res) => {
+app.post('/upload', (req, res,next ) => {
+  const contentType = req.headers['content-type']  || '';
+  if (contentType.includes ('multipart/form-data')) {
+     upload.any()(req, res, next);
+  } else {
+    next();
+  }
+},(req, res) => {
+  
+  const video = req.files.find(f => f.fikename === 'video'));
+  if (video){
+    const videoF = video.path;
+    const gifPath = path.join('results', `${videoF.filename}.gif`);
+    const command = `python pypr/srcgif.py "${videoF}" "${gifPath}"`;
+  }
+  
+  exec(command, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error: ${error.message}`);
+      return res.status(500).send('Error processing video');
+    }
+    res.download(gifPath, 'result.gif');
+  });
+  return;
+}
    const video = req.file.path;
    const gifPath = path.join('results', `${req.file.filename}.gif`);
-   const command = ' python pypr/videoGift.py ' + video + ' ' + gifPath;
+   const command = ' python pypr/srcgif.py ' + video + ' ' + gifPath;
    exec(command, (error, stdout, stderr) => {
      if (error) {
        console.error(`Error: ${error.message}`);
