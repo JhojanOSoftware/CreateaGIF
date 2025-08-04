@@ -5,10 +5,18 @@ from PIL import Image
 import numpy as np
 
 def main():
+    flatinpt = []  # Almacena input fils
+    inputfls = sys.argv[1:-1]  # Todos los argumentos excepto el último
+    outputfls = sys.argv[-1]  # El último argumento es el archivo de salida
+    for arg in inputfls:
+        flatinpt.extend(arg.split(','))  # Dividir por comas si hay varias entradas
+        flatinpt = [f.strip() for f in flatinpt if f.strip()]  # Eliminar espacios en blanco y entradas vacía   s
     if len(sys.argv) < 3:
         print("Uso: python srcgif.py <input_file(s)> <output_gif>")
         sys.exit(1)
-    PassInPt(sys.argv[1:])
+
+
+    PassInPt(flatinpt)
 
 def FlEx (files): #funcion para verificar si exixte el archivo 
     for f in files:
@@ -34,7 +42,7 @@ def Vds(filename): #Verifica si el archivo es un video
 def PassInPt(input_arg):
     try:            
         if ',' in input_arg:
-            files = [f.strip() for f in input_arg.split(',') if is_image(f.strip())]
+            files = [f.strip() for f in input_arg.split(',') if Imgs(f.strip())]
             return 'images', files
         elif Imgs (input_arg):
             return "images", [input_arg]
