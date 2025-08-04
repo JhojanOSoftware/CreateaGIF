@@ -43,7 +43,7 @@ def PassInPt(input_arg):
     except Exception as e:
         print(f"Error al procesar el argumento: {e}")
         sys.exit(1)
-        return "unsupported", None
+        return "unsupported"
 
 def Ld_Re(image_files,output_gif):   
     try: 
@@ -53,19 +53,26 @@ def Ld_Re(image_files,output_gif):
     except  Exception as e : 
         print(f"Error al cargar archivos: {e}")
         sys.exit(1)
-        return None
-def ImgsGif(image_files, output_gif):
-    FlEx(image_files)  # Verificar si los archivos existen
-    imgs = Ld_Re(image_files, output_gif)
-    iio.imwrite(output_gif, imgs, duration=500, loop=0)
 
+def ImgsGif(image_files, output_gif):
+    try: 
+        FlEx(image_files)  # Verificar si los archivos existen
+        imgs = Ld_Re(image_files, output_gif)
+        iio.imwrite(output_gif, imgs, duration=500, loop=0)
+    except Exception as e: 
+        print(f"Error al crear el GIF de imagenes: {e}")
+        sys.exit(1)
 def VdsGif(video_file, output_gif, max_frames=40):
-    frames = []
-    for i, frame in enumerate(iio.imiter(video_file)):
-        if i >= max_frames:
-            break
-        frames.append(frame)
-    iio.imwrite(output_gif, frames, duration=100, loop=0)
+    try: 
+        frames = []
+        for i, frame in enumerate(iio.imiter(video_file)):
+            if i >= max_frames:
+                break
+            frames.append(frame)
+        iio.imwrite(output_gif, frames, duration=100, loop=0)
+    except Exception as e:
+        print(f"Error al crear el GIF del video: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
